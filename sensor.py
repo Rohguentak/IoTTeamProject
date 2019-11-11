@@ -40,9 +40,11 @@ def dust_seonsor():
 def servo_motor(data):
 	p.start(0)
 	if data ==1:
-		p.ChangeDutyCycle(7.5) ## close canopy
+		p.ChangeDutyCycle(7.5) ## close canopy or break
 		p.stop()
 		
+def fsr_sensor():
+	
 	
 	
 while True:
