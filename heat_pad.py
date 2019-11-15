@@ -19,7 +19,7 @@ def analog_read(channel):
 def temp_sensor():
 	
 	sensor = 'Adafruit_DHT.DHT11' ## using dht11
-	pin = '13'#put pin num'
+	pin = ''#put pin num'
 	humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
 	if humidity is not None and temperature is not None:
 		print('temp ={0:0.1f}* Humodity={1:0.1f}%'.format(temperature, humidity))
@@ -43,15 +43,14 @@ def servo_motor(data):
 		p.ChangeDutyCycle(7.5) ## close canopy or break
 		p.stop()
 		
-
+def fsr_sensor():
 	
 	
 	
 while True:
-	##dust = dust_seonsor()
-	##volt = dust* 3.3 /1024
-	##print('dust = %d		voltage = %f' % (dust, volt))
-	temp_sensor()
+	dust = dust_seonsor()
+	volt = dust* 3.3 /1024
+	print('dust = %d		voltage = %f' % (dust, volt))
 	time.sleep(1)
 	
 
