@@ -4,3 +4,51 @@ https://m.blog.naver.com/chandong83/220902795488
 
 RFID 실행 환경 설정 방법
 https://www.instructables.com/id/RFID-RC522-Raspberry-Pi/%20https://github.com/lthiery/SPI-Py.git
+
+
+
+pc 
+핸드폰
+
+라즈베리파이1
+발찌
+
+라즈베리파이2
+카시트
+
+라즈베리파이3
+차량
+유모차 뼈대
+
+
+미리 데우기 coap
+파이1 pub --- 파이2 sub
+파이1 pub --- pc sub
+pc pub --- 파이2 sub
+
+
+실시간 온도조절 mqtt        ---- temp
+파이1 pub ---- 파이2 sub
+
+
+유모차 방치 알림 mqtt
+파이3(뼈대)  --rfid-- pc 
+파이3(뼈대) pub --- 파이2 sub  ----- handfree
+파이2 pub --- pc sub ------ neglect
+
+
+차량 방치 알림 mqtt
+파이3(차량) pub ---- 파이2 sub -----
+파이2 pub ---- pc sub
+
+핸드폰 거치 강제 기능
+ rfid 기능
+
+추가 요청할 센서 및 
+빵판 3개
+150옴 막대저항
+220uf 캐패시터
+
+mcp3008 3개
+
+모스펫 1개
