@@ -1,3 +1,6 @@
+정책 설명
+https://docs.aws.amazon.com/ko_kr/iot/latest/developerguide/pub-sub-policy.html
+
 host 주소
 azjctapxbp7sc-ats.iot.ap-northeast-2.amazonaws.com
 
