@@ -10,15 +10,19 @@ https://www.instructables.com/id/RFID-RC522-Raspberry-Pi/%20https://github.com/l
 pc 
 핸드폰
 
+
 라즈베리파이1
+
 발찌(온도, 심박)
 
 
 라즈베리파이2
+
 카시트(온도, 미세먼지, 서보모터, 감압센서 , 열선패드)
 
 
 라즈베리파이3
+
 차량(감압센서)
 
 유모차 뼈대(서보모터, rfid 리더기)
