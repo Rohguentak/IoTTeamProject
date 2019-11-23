@@ -10,8 +10,14 @@ rootCAPath = "./RootCA.crt"
 certificatePath = "./3cfe6893cf-certificate.pem.crt"
 privateKeyPath = "./3cfe6893cf-private.pem.key" 
 port = 8883
-clientId = "client2"
-topic = "IoT_System_Email_Alarm"
+clientId = "car_seat_pi"
+temp_topic = "anklet/temp"
+
+handfree_topic = "stroller/handfree"
+
+neglect_topic = "car_seat/neglect"
+
+parent_topic = "car/parent"
 
 myAWSIoTMQTTClient = None
 myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId)
@@ -37,8 +43,27 @@ def customCallback(client, userdata, message):
 	##	gpio.output(sensor, False)
      
 	
-	
-myAWSIoTMQTTClient.subscribe(topic, 1, customCallback)
+# anklet/temp	
+myAWSIoTMQTTClient.subscribe(temp_topic, 1, customCallback)
+# stroller/handfree
+myAWSIoTMQTTClient.subscribe(handfree_topic,1,customCallback)
+# car/parent
+myAWSIoTMQTTClient.subscribe(parent_topic,1,customCallback)
+
+loopCount = 0
 
 while True:
-	time.sleep(1)
+
+    message = {}
+    message['message'] = "car_seat/neglect"
+    message['sequence'] = loopCount
+    messageJson = json.dumps(message)
+
+    # car_seat/neglect
+    message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
+    print(message, loopCount)
+    
+    time.sleep(3)
+    loopCount +=1
+
+

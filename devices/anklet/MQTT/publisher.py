@@ -146,7 +146,7 @@ rootCAPath = "./anklet_pi/RootCA.crt"
 certificatePath = "./anklet_pi/bc1b2abd97-certificate.pem.crt"
 privateKeyPath = "./anklet_pi/bc1b2abd97-private.pem.key"
 clientId = "anklet_pi"
-topic = "IoT_System_Email_Alarm"
+topic = "anklet/temp"
 
 
 
@@ -184,7 +184,7 @@ t1.start()
 while True:
     
     message = {}
-    message['message'] = "asd"
+    message['message'] = "anklet/temp"
     message['sequence'] = BPM
     messageJson = json.dumps(message)
 
