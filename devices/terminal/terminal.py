@@ -26,9 +26,13 @@ myAWSIoTMQTTClient.connect()
 
 
 def customCallback(client, userdata, message):
-	print("Received a new message: ")
-	print(message.payload)
-	print("--------------\n\n")
+	#print("Received a new message: ")
+	#print(message.payload)
+	#print("--------------\n\n")
+        temp = json.loads(message.payload)
+        neglect = temp["sequence"]
+        if(neglect == 1):
+            print("baby is neglected\n")
 	##if message.payload == '1':
 	##	gpio.output(sensor,True)
 	##else:
