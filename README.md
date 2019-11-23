@@ -5,6 +5,10 @@ host 주소
 azjctapxbp7sc-ats.iot.ap-northeast-2.amazonaws.com
 
 # IoTTeamProject
+
+fsr 2개, 온도 센서로 부터 생성되는 기능들 추가해야함
+hand free 아니고 자동차에 부모 있는 상황을 초기상황으로 가정하고 방치기능 구현했음
+온도에 따른 방치시간 설정, 아기가 카시트에 있는지 확인해야할듯
 온습도 센서 예제
 https://m.blog.naver.com/chandong83/220902795488
 
