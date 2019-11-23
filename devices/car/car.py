@@ -25,29 +25,43 @@ myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 myAWSIoTMQTTClient.connect()
 
 
-def Callback_func(payload, responseStatus, token):
-    print()
-    print('UPDATE: $aws/things/' + Thing_Name + '/shadow/update/#')
-    print("payload = " + payload)
-    print("responseStatus = " + responseStatus)
-    print("token = " + token)
+parent_is_in_car = 1
+fsr_sensor = 0
+
+def send_parent_is_in_car(temp):
+    global parent_is_in_car
+    if (temp == 1): # fsr_sensor
+        if(parent_is_in_car == 0):
+            #send parent is came.
+            parent_is_in_car = 1
+            message = {}
+            message['message'] = "car/parent"
+            message['sequence'] = parent_is_in_car
+            messageJson = json.dumps(message)
+
+            message = myAWSIoTMQTTClient.publish(parent_topic,messageJson,1)
+            print("parent is in car")
+    
+    elif (temp == 0): # fsr_sensor
+        if(parent_is_in_car == 1): 
+            #send parent is gone.
+            parent_is_in_car = 0
+            message = {}
+            message['message'] = "car/parent"
+            message['sequence'] = parent_is_in_car
+            messageJson = json.dumps(message)
+
+            message = myAWSIoTMQTTClient.publish(parent_topic,messageJson,1)
+            print("parent is not in car")
 
 
-loopCount=0
 
 
 while True:
     
-    message = {}
-    message['message'] = "car/parent"
-    message['sequence'] = loopCount
-    messageJson = json.dumps(message)
-
-    message = myAWSIoTMQTTClient.publish(parent_topic,messageJson,1)
-    print(message, loopCount)
-    
+    temp = input()
+    send_parent_is_in_car(temp)
     time.sleep(3)
-    loopCount +=1
 
 
 
