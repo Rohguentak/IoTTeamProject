@@ -8,7 +8,8 @@ spi = spidev.SpiDev()
 spi.open(0,0)
 spi.max_speed_hz = 1350000
 
-BPM = 0;
+BPM = 0
+TEMP = 0
 
 def analog_read(channel):
     r = spi.xfer2([1,(8+channel) << 4,0])
@@ -177,15 +178,15 @@ j=7
 k=0
 loopCount=0
 
-a = ["a","b","c"]
-
 t1 = Thread(target = pulse)
 t1.start()
+
 while True:
     
     message = {}
-    message['message'] = "anklet/temp"
-    message['sequence'] = BPM
+    message['message'] = topic
+    message['pulse'] = BPM
+    message['temp'] = TEMP
     messageJson = json.dumps(message)
 
     message = myAWSIoTMQTTClient.publish(topic,messageJson,1)
