@@ -4,6 +4,7 @@ from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import spidev
 from threading import Thread
 
+
 spi = spidev.SpiDev()
 spi.open(0,0)
 spi.max_speed_hz = 1350000
@@ -25,7 +26,7 @@ def pulse():
     lastBeatTime = 0        # used to find IBI
     P = 512                 # used to find peak in pulse wave, seeded
     T = 512                 # used to find trough in pulse wave, seeded
-    thresh = 525            # used to find instant moment of heart beat, seeded
+    thresh = 400            # used to find instant moment of heart beat, seeded
     amp = 100               # used to hold amplitude of pulse waveform, seeded
     firstBeat = True        # used to seed rate array so we startup with reasonable BPM
     secondBeat = False      # used to seed rate array so we startup with reasonable BPM
@@ -34,7 +35,8 @@ def pulse():
     IBI = 600               # int that holds the time interval between beats! Must be seeded
     Pulse = False           # "True" when User's live heartbeat is detected. "False" when not a "live beat
     lastTime = int(time.time()*1000)
-    while True:
+    try:
+      while True:
         for k in range(1,20):
             Signal = analog_read(0)
             currentTime = int(time.time()*1000)
@@ -96,6 +98,7 @@ def pulse():
             time.sleep(0.05)
             '''
             print(Signal)
+            
             if   Signal > 760 : print('-----------------')
             elif Signal > 700 : print('---------------')
             elif Signal > 600 : print('-------------')
@@ -104,9 +107,34 @@ def pulse():
             elif Signal > 400 : print('-------')
             
             else :              print('-')
-                        '''
+            '''
+    except KeyboardInterrupt:
+        print("terminated by keyboard")
+            
+# pulse part
 
+import Adafruit_DHT
+import time
 
+def temp():
+    sensor = Adafruit_DHT.DHT11
+    pin = 24
+    global TEMP
+    try:
+        while True :
+            h, t = Adafruit_DHT.read_retry(sensor, pin)
+            
+            if h is not None and t is not None :
+                print("Temperature = {0:0.1f}%".format(t))
+                TEMP = t
+        
+            else :
+                print('Read error')
+            time.sleep(5)
+    except KeyboardInterrupt:
+        print("terminated by keyboard")
+
+#temp part
 
 
 
@@ -147,8 +175,8 @@ rootCAPath = "./anklet_pi/RootCA.crt"
 certificatePath = "./anklet_pi/bc1b2abd97-certificate.pem.crt"
 privateKeyPath = "./anklet_pi/bc1b2abd97-private.pem.key"
 clientId = "anklet_pi"
-topic = "anklet/temp"
-
+topic_temp = "anklet/temp"
+topic_pulse = "anklet/pulse"
 
 
 
@@ -162,7 +190,7 @@ myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
 myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
 myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 myAWSIoTMQTTClient.connect()
-i=0
+
 
 
 def Callback_func(payload, responseStatus, token):
@@ -173,29 +201,40 @@ def Callback_func(payload, responseStatus, token):
     print("token = " + token)
 
 
-i=2
-j=7
-k=0
 loopCount=0
 
 t1 = Thread(target = pulse)
 t1.start()
-
-while True:
+t2 = Thread(target = temp)
+t2.start()
+try:
+    while True:
     
-    message = {}
-    message['message'] = topic
-    message['pulse'] = BPM
-    message['temp'] = TEMP
-    messageJson = json.dumps(message)
+        message_temp = {}
+        message_temp['message'] = topic_temp
+        message_temp['sequence'] = TEMP
+        messageJson_temp = json.dumps(message_temp)
 
-    message = myAWSIoTMQTTClient.publish(topic,messageJson,1)
-    print(message, BPM)
+        message_pulse = {}
+        message_pulse['message'] = topic_pulse
+        message_pulse['sequence'] = BPM
+        messageJson_pulse = json.dumps(message_pulse)
+        
+        
+        message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
+        print(message, BPM)
+        message = myAWSIoTMQTTClient.publish(topic_pulse,messageJson_pulse,1)
+        print(message, TEMP)
     
-    time.sleep(3)
-    loopCount +=1
-    k = (k+1)%3
-
+        for k in range(3):
+            print(str(TEMP) + "*****" + str(BPM))
+            time.sleep(1)
+        
+        loopCount +=1
+except KeyboardInterrupt:
+    t1.stop()
+    t2.stop()
+    print("terminated by keyboard")
 
 
 
