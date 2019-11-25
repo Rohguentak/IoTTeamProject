@@ -1,5 +1,5 @@
 라즈베리파이 핀맵 http://www.dreamy.pe.kr/zbxe/files/attach/images/1209/923/768/003/ae9486b726825a307d431cc0fdc2597e.png
-mcp3008 핀 배치
+mcp3008 핀 배치 https://m.blog.naver.com/PostView.nhn?blogId=roboholic84&logNo=220367321777&proxyReferer=https%3A%2F%2Fwww.google.com%2F
 
 
 정책 설명
