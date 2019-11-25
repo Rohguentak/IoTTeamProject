@@ -3,6 +3,8 @@ import json
 import sys
 import spidev
 import Adafruit_DHT
+import RPi.GPIO as gpio
+
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
 host = "azjctapxbp7sc-ats.iot.ap-northeast-2.amazonaws.com"
@@ -14,6 +16,13 @@ clientId = "car_seat_pi"
 
 sensor = Adafruit_DHT.DHT11
 pin = 24 ## temp_sensor
+dust_gpio = 2
+gpio.setmode(gpio.BCM)
+gpio.setup(dust_gpio, gpio.OUT)
+
+sampletime = 280
+delaytime = 40
+offtime = 9680
 
 spi = spidev.SpiDev()
 spi.open(0,0)
@@ -45,6 +54,7 @@ baby_is_in_car_seat = 0
 neglect_alarm_on = 1
 parent_is_in_car = 1
 temp_of_baby = 0
+dust_near_baby = 0
 
 def analog_read(channel):
     r = spi.xfer2([1,(8+channel) <<4,0])
@@ -57,6 +67,25 @@ def car_seat_temper():
         h , t = Adafruit_DHT.read_retry(sensor, pin)
         if t is not None :
              car_seat_temp = t
+
+def dust_sensor():
+    global dust_near_baby
+    gpio.output(dust_gpio, False)
+    time.sleep(sampletime/1000000.0)
+    dust = analog_read(1)
+    time.sleep(delaytime/1000000.0)
+    gpio.output(dust_gpio, True)
+    time.sleep(offtime/1000000.0)
+    if(dust > 60) :
+        dust_near_baby = 1
+    else :
+        dust_near_baby = 0
+    volt = dust * 5.0/1023
+    dust_density = volt * 0.17 - 0.1
+    print('dust = %d		voltage = %f    dust_density = %f' % (dust, volt,dust_density))
+	
+	
+        
 #checking neglect with condition. temp of car_seat, fsr sensor, neglect time.
 def baby_is_in_seat():
     global baby_is_in_car_seat
@@ -100,7 +129,7 @@ def Callback_for_parent(client, userdata, message):
 def stroller_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
-    if(neglect_alarm_on == 1 and hand_free == 1 and time.time() > neglect_threshold_time and baby_is_in_car_seat == 1):# baby_is_in_car_seat = 1
+    if(neglect_alarm_on == 1 and hand_free == 1 or time.time() > neglect_threshold_time and baby_is_in_car_seat == 1 or dust_near_baby == 1):# baby_is_in_car_seat = 1
         neglect_alarm_on = 0
         return 1
     return 0
@@ -108,7 +137,7 @@ def stroller_neglect_alarm_condition():
 def car_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
-    if(neglect_alarm_on == 1 and parent_is_in_car == 0 and time.time() > neglect_threshold_time and baby_is_in_car_seat == 1):# baby_is_in_car_seat = 1
+    if(neglect_alarm_on == 1 and parent_is_in_car == 0 or time.time() > neglect_threshold_time and baby_is_in_car_seat == 1 or dust_near_baby == 1):# baby_is_in_car_seat = 1
         neglect_alarm_on = 0
         return 1
     return 0
@@ -126,12 +155,16 @@ myAWSIoTMQTTClient.subscribe(parent_topic,1,Callback_for_parent)
 loopCount = 0
 
 while True:
-
-    baby_is_in_seat()
-    if(baby_is_in_car_seat == 1) :
-        print("baby is in car seat")
-    else :
-        print("no baby")
+    #dust_sensor()
+    #if(dust_near_baby == 1) :
+    #    print("baby is danger")
+    #else :
+    #    print("air is fresh")
+    #baby_is_in_seat()
+    #if(baby_is_in_car_seat == 1) :
+    #    print("baby is in car seat")
+    #else :
+    #    print("no baby")
             
     if( car_neglect_alarm_condition() == 1):
         print("send car neglect alarm msg to terminal")
