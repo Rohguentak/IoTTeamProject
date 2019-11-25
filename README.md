@@ -1,3 +1,7 @@
+라즈베리파이 핀맵 http://www.dreamy.pe.kr/zbxe/files/attach/images/1209/923/768/003/ae9486b726825a307d431cc0fdc2597e.png
+mcp3008 핀 배치
+
+
 정책 설명
 https://docs.aws.amazon.com/ko_kr/iot/latest/developerguide/pub-sub-policy.html
 https://docs.aws.amazon.com/ko_kr/iot/latest/developerguide/iot-moisture-tutorial.html
