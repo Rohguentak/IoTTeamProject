@@ -1,3 +1,14 @@
+라즈베리파이 핀맵 http://www.dreamy.pe.kr/zbxe/files/attach/images/1209/923/768/003/ae9486b726825a307d431cc0fdc2597e.png
+
+mcp3008 핀 배치 https://m.blog.naver.com/PostView.nhn?blogId=roboholic84&logNo=220367321777&proxyReferer=https%3A%2F%2Fwww.google.com%2F
+
+
+미세먼지 센서 회로도 https://cafe.naver.com/mechawiki/33
+
+초록색 - adc in
+
+검정색 - led 조절 핀 GPIO2
+
 정책 설명
 https://docs.aws.amazon.com/ko_kr/iot/latest/developerguide/pub-sub-policy.html
 https://docs.aws.amazon.com/ko_kr/iot/latest/developerguide/iot-moisture-tutorial.html
