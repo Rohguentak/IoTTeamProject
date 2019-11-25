@@ -12,6 +12,7 @@ privateKeyPath = "./6ca402f832-private.pem.key"
 port = 8883
 clientId = "terminal_pc"
 car_seat_neglect_topic = "car_seat/neglect"
+topic_pulse = "anklet/pulse"
 
 myAWSIoTMQTTClient = None
 myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId)
@@ -38,9 +39,12 @@ def customCallback(client, userdata, message):
 	##else:
 	##	gpio.output(sensor, False)
      
-	
+def customCallback_dummy(client, userdata, message):
+        print("Received a new message: ")
+	print(message.payload)
+	print("--------------\n\n")
 	
 myAWSIoTMQTTClient.subscribe(car_seat_neglect_topic, 1, customCallback)
-
+myAWSIoTMQTTClient.subscribe(topic_pulse, 1, customCallback_dummy)
 while True:
 	time.sleep(1)
