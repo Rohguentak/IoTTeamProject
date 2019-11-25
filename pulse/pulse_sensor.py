@@ -41,8 +41,8 @@ def pulse_sensor():
             else:
                 print("No Heartbeat found")
             time.sleep(1)
-except:
-    p.stopAsyncBPM()
+    except:
+        p.stopAsyncBPM()
     return data
     
 def dust_seonsor():
@@ -56,14 +56,7 @@ def servo_motor(data):
         p.ChangeDutyCycle(7.5) ## close canopy or break
         p.stop()
         
-def fsr_sensor():
     
     
     
-while True:
-    dust = dust_seonsor()
-    volt = dust* 3.3 /1024
-    print('dust = %d        voltage = %f' % (dust, volt))
-    time.sleep(1)
-    
-
+pulse_sensor()

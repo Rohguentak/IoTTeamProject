@@ -41,8 +41,9 @@ def customCallback(client, userdata, message):
 	
 	
 myAWSIoTMQTTClient.subscribe(topic, 1, customCallback)
+
 while True:
-		time.sleep(1)
+	sleep(1)
 
 
     
