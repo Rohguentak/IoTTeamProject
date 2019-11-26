@@ -20,6 +20,11 @@ dust_gpio = 2
 gpio.setmode(gpio.BCM)
 gpio.setup(dust_gpio, gpio.OUT)
 
+pin_servo = 18 ## servo_motor
+gpio.setup(pin_servo, gpio.OUT)
+servo = gpio.PWM(pin_servo,50)
+servo.start(0)
+
 sampletime = 280
 delaytime = 40
 offtime = 9680
@@ -32,7 +37,7 @@ temp_topic = "anklet/temp"
 handfree_topic = "stroller/handfree"
 neglect_topic = "car_seat/neglect"
 parent_topic = "car/parent"
-auto_
+
 
 myAWSIoTMQTTClient = None
 myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId)
@@ -52,7 +57,7 @@ neglect_judge_interval = 3
 neglect_threshold_time = time.time()
 car_seat_temp = 0
 baby_is_in_car_seat = 0
-neglect_alarm_on = 1
+neglect_alarm_on = 0
 parent_is_in_car = 1
 temp_of_baby = 0
 dust_near_baby = 0
@@ -81,9 +86,10 @@ def dust_sensor():
         dust_near_baby = 1
     else :
         dust_near_baby = 0
-    volt = dust * 5.0/1023
-    dust_density = volt * 0.17 - 0.1
-    print('dust = %d		voltage = %f    dust_density = %f' % (dust, volt,dust_density))
+    #volt = dust * 5.0/1023
+    #dust_density = volt * 0.17 - 0.1
+    print("dust : ",dust)
+    #print('dust = %d		voltage = %f    dust_density = %f' % (dust, volt,dust_density))
 	
 	
         
@@ -91,15 +97,17 @@ def dust_sensor():
 def baby_is_in_seat():
     global baby_is_in_car_seat
     temp = analog_read(0)
-    print(temp)
+    
     if (temp > 25) :
         baby_is_in_car_seat = 1
+        print("baby is in carseat")
     else :
         baby_is_in_car_seat = 0
+        print("carseat is empty")
 
 def Callback_for_tempcontrol(client, userdata, message):
     global temp_of_baby
-	temp = json.loads(message.payload)
+    temp = json.loads(message.payload)
     temp_of_baby = temp["sequence"]
     print("temp_of_baby", temp_of_baby , "is received\n")
 
@@ -129,10 +137,17 @@ def stroller_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
     dust_sensor()
-    if(neglect_alarm_on == 1 and hand_free == 1 or time.time() > neglect_threshold_time and baby_is_in_car_seat == 1 or dust_near_baby == 1):# baby_is_in_car_seat = 1
-        neglect_alarm_on = 0
-        return 1
+    if(neglect_alarm_on == 1):
+        if(hand_free == 1):
+            if(baby_is_in_car_seat == 1):
+                if(time.time() > neglect_threshold_time or dust_near_baby == 1) :
+                    neglect_alarm_on = 0
+                    return 1
     return 0
+    #if(neglect_alarm_on == 1 and hand_free == 1 and baby_is_in_car_seat == 1 or time.time() > neglect_threshold_time or dust_near_baby == 1):# baby_is_in_car_seat = 1
+    #    neglect_alarm_on = 0
+    #    return 1
+    #return 0
     
 def car_neglect_alarm_condition():
     global neglect_alarm_on
@@ -143,6 +158,14 @@ def car_neglect_alarm_condition():
         return 1
     return 0
 
+def move_servo(data):
+    if data ==1:
+        servo.ChangeDutyCycle(7.5) ## close canopy or break
+        time.sleep(0.5)
+    elif data == 0:
+        servo.ChangeDutyCycle(12.5)
+        time.sleep(0.5)
+    
 ##def control_pad():
         
 	
@@ -154,7 +177,7 @@ myAWSIoTMQTTClient.subscribe(handfree_topic,1,Callback_for_handfree)
 myAWSIoTMQTTClient.subscribe(parent_topic,1,Callback_for_parent)
 
 loopCount = 0
-
+move_servo(0)
 while True:
     #dust_sensor()
     #if(dust_near_baby == 1) :
@@ -166,19 +189,19 @@ while True:
     #    print("baby is in car seat")
     #else :
     #    print("no baby")
-            
-    if( car_neglect_alarm_condition() == 1):
-        print("send car neglect alarm msg to terminal")
-        message = {}
-        message['message'] = "car_seat/neglect"
-        message['sequence'] = 1
-        messageJson = json.dumps(message)
+    
+    #if( car_neglect_alarm_condition() == 1):
+    #    print("send car neglect alarm msg to terminal")
+    #    message = {}
+    #    message['message'] = "car_seat/neglect"
+    #    message['sequence'] = 1
+    #    messageJson = json.dumps(message)
 
         # car_seat/neglect
-        message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
+    #    message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
         #print(message, 1)
 
-
+    #print(neglect_alarm_on, hand_free, baby_is_in_car_seat, (time.time() > neglect_threshold_time),dust_near_baby)
     if( stroller_neglect_alarm_condition() == 1): #check neglect and if neglect send msg to terminal
         print("send stroller neglect alarm msg to terminal")
         message = {}
@@ -189,7 +212,10 @@ while True:
         # car_seat/neglect
         message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
         #print(message, 1)
-    car_seat_temper()
+    if(dust_near_baby == 1 and baby_is_in_car_seat == 1) :
+        move_servo(1)
+
+    #car_seat_temper()
     if(abs(car_seat_temp - temp_of_baby) > 3) : ##live temp controller
         print("pad must be controlled")
         ##control_pad()
