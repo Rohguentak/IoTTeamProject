@@ -110,10 +110,27 @@ def read_card():
             break
     return count
 
+pin_servo = 18 ## servo_motor
+GPIO.setup(pin_servo, GPIO.OUT)
+servo = GPIO.PWM(pin_servo,50)
+servo.start(0)
+
+
+def move_servo(data):
+    if data ==1:
+        servo.ChangeDutyCycle(7.5) ## close canopy or break
+        time.sleep(0.5)
+    elif data == 0:
+        servo.ChangeDutyCycle(12.5)
+        time.sleep(0.5)
+ 
+move_servo(0)
+
 while continue_reading:
     card_present_time = read_card()
     if card_present_time >0:
         if hand_free == 0:
+            move_servo(0) # lock the stroller's wheel
             #send msg parent is behind the stroller
             print("parent is here now")
             hand_free = 1
@@ -130,6 +147,7 @@ while continue_reading:
     
     else:
         if hand_free == 1:
+            move_servo(1) #unlock the stroller's wheel
             #send msg parent is leave the stroller.
             print("parent is gone")
             hand_free =0
