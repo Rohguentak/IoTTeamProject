@@ -18,15 +18,10 @@ def analog_read(channel):
 	adc_out = ((r[1]&3) << 8) + r[2]
 	return adc_out
 	
-def dust_seonsor():
-	reading = analog_read(0)
-	data =reading
-	return data	
-	
 while True:	
 	gpio.output(sensor, False)
 	time.sleep(sampletime/1000000.0)
-        dust = dust_seonsor()
+        dust = analog_read(1)
         time.sleep(delaytime/1000000.0)
 	gpio.output(sensor, True)
         time.sleep(offtime/1000000.0)

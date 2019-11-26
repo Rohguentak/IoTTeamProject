@@ -33,11 +33,16 @@ spi = spidev.SpiDev()
 spi.open(0,0)
 spi.max_speed_hz = 1000000
 
+# sub topics
 temp_topic = "anklet/temp"
 handfree_topic = "stroller/handfree"
-neglect_topic = "car_seat/neglect"
 parent_topic = "car/parent"
 
+temp_set_on_topic = "terminal/temp_set_on"
+
+# pub topics 
+neglect_topic = "car_seat/neglect"
+#auto_
 
 myAWSIoTMQTTClient = None
 myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId)
@@ -132,7 +137,12 @@ def Callback_for_parent(client, userdata, message):
     if(parent_is_in_car == 0): # should set time based on temp.
         neglect_alarm_on = 1
         neglect_threshold_time = time.time() + (neglect_judge_interval)
-
+def Callback_for_temp_set_on(client, userdata, message):
+    temp = json.loads(message.payload)
+    # terminal/temp_set_on data is baby's temperature.
+    temperature = temp["sequence"]
+    print("temperature", temperature , "is received\n")
+    
 def stroller_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
@@ -175,6 +185,8 @@ myAWSIoTMQTTClient.subscribe(temp_topic, 1, Callback_for_tempcontrol)
 myAWSIoTMQTTClient.subscribe(handfree_topic,1,Callback_for_handfree)
 # car/parent
 myAWSIoTMQTTClient.subscribe(parent_topic,1,Callback_for_parent)
+# terminal/temp_set_on
+myAWSIoTMQTTClient.subscribe(temp_set_on_topic,1,Callback_for_temp_set_on)
 
 loopCount = 0
 move_servo(0)

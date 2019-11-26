@@ -11,7 +11,7 @@ spi.max_speed_hz = 1350000
 
 BPM = 0
 TEMP = 0
-
+exit = 1
 def analog_read(channel):
     r = spi.xfer2([1,(8+channel) << 4,0])
     adc_out = ((r[1]&3)<<8) + r[2]
@@ -21,6 +21,7 @@ def analog_read(channel):
 
 def pulse():
     global BPM
+    global exit
     rate = [0] * 10         # array to hold last 10 IBI values
     sampleCounter = 0       # used to determine pulse timing
     lastBeatTime = 0        # used to find IBI
@@ -36,7 +37,7 @@ def pulse():
     Pulse = False           # "True" when User's live heartbeat is detected. "False" when not a "live beat
     lastTime = int(time.time()*1000)
     try:
-      while True:
+      while exit == 1:
         for k in range(1,20):
             Signal = analog_read(0)
             currentTime = int(time.time()*1000)
@@ -109,19 +110,22 @@ def pulse():
             else :              print('-')
             '''
     except KeyboardInterrupt:
-        print("terminated by keyboard")
+        print("terminated by keyboard------pulse")
             
 # pulse part
 
+
+
+
 import Adafruit_DHT
-import time
 
 def temp():
     sensor = Adafruit_DHT.DHT11
     pin = 24
     global TEMP
+    global exit
     try:
-        while True :
+        while exit==1 :
             h, t = Adafruit_DHT.read_retry(sensor, pin)
             
             if h is not None and t is not None :
@@ -132,7 +136,7 @@ def temp():
                 print('Read error')
             time.sleep(5)
     except KeyboardInterrupt:
-        print("terminated by keyboard")
+        print("terminated by keyboard-------temp")
 
 #temp part
 
@@ -175,9 +179,13 @@ rootCAPath = "./anklet_pi/RootCA.crt"
 certificatePath = "./anklet_pi/bc1b2abd97-certificate.pem.crt"
 privateKeyPath = "./anklet_pi/bc1b2abd97-private.pem.key"
 clientId = "anklet_pi"
+
+# pub topics
 topic_temp = "anklet/temp"
 topic_pulse = "anklet/pulse"
 
+# sub topics
+temp_request_topic = "terminal/temp_request"
 
 
 myAWSIoTMQTTClient = None
@@ -200,6 +208,17 @@ def Callback_func(payload, responseStatus, token):
     print("responseStatus = " + responseStatus)
     print("token = " + token)
 
+def Callback_temp_request(client, userdata, message):
+    message_temp = {}
+    message_temp['message'] = topic_temp
+    message_temp['sequence'] = 35
+    messageJson_temp = json.dumps(message_temp)
+
+    message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
+    print("TEMP is sended to terminal for temp_set_on")
+    print(message, TEMP)
+    
+
 
 loopCount=0
 
@@ -207,6 +226,11 @@ t1 = Thread(target = pulse)
 t1.start()
 t2 = Thread(target = temp)
 t2.start()
+
+myAWSIoTMQTTClient.subscribe(temp_request_topic,1,Callback_temp_request)
+
+
+
 try:
     while True:
     
@@ -221,10 +245,10 @@ try:
         messageJson_pulse = json.dumps(message_pulse)
         
         
-        message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
-        print(message, BPM)
-        message = myAWSIoTMQTTClient.publish(topic_pulse,messageJson_pulse,1)
-        print(message, TEMP)
+        #message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
+        #print(message, BPM)
+        #message = myAWSIoTMQTTClient.publish(topic_pulse,messageJson_pulse,1)
+        #print(message, TEMP)
     
         for k in range(3):
             print(str(TEMP) + "*****" + str(BPM))
@@ -232,8 +256,14 @@ try:
         
         loopCount +=1
 except KeyboardInterrupt:
-    t1.stop()
-    t2.stop()
+    print("keyboard interrupt")
+    exit = 0
+    t1.join()
+    print("t1 joined")
+    
+    t2.join()
+    print("t2 joined")
+    
     print("terminated by keyboard")
 
 
