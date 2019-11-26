@@ -6,6 +6,7 @@ import Adafruit_DHT
 import RPi.GPIO as gpio
 
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
+from threading import Thread
 
 host = "azjctapxbp7sc-ats.iot.ap-northeast-2.amazonaws.com"
 rootCAPath = "./RootCA.crt"
@@ -66,7 +67,7 @@ neglect_alarm_on = 0
 parent_is_in_car = 1
 temp_of_baby = 0
 dust_near_baby = 0
-
+temp_to_set = 0
 def analog_read(channel):
     r = spi.xfer2([1,(8+channel) <<4,0])
     adc_out = ((r[1]&3<<8)+r[2])
@@ -78,6 +79,8 @@ def car_seat_temper():
         h , t = Adafruit_DHT.read_retry(sensor, pin)
         if t is not None :
              car_seat_temp = t
+#t1 = Thread(target = car_seat_temper)
+#t1.start()
 
 def dust_sensor():
     global dust_near_baby
@@ -137,10 +140,12 @@ def Callback_for_parent(client, userdata, message):
     if(parent_is_in_car == 0): # should set time based on temp.
         neglect_alarm_on = 1
         neglect_threshold_time = time.time() + (neglect_judge_interval)
+        
 def Callback_for_temp_set_on(client, userdata, message):
+    global temp_to_set
     temp = json.loads(message.payload)
     # terminal/temp_set_on data is baby's temperature.
-    temperature = temp["sequence"]
+    temp_to_set = temp["sequence"]
     print("temperature", temperature , "is received\n")
     
 def stroller_neglect_alarm_condition():
@@ -202,15 +207,15 @@ while True:
     #else :
     #    print("no baby")
     
-    #if( car_neglect_alarm_condition() == 1):
-    #    print("send car neglect alarm msg to terminal")
-    #    message = {}
-    #    message['message'] = "car_seat/neglect"
-    #    message['sequence'] = 1
-    #    messageJson = json.dumps(message)
+    if( car_neglect_alarm_condition() == 1):
+        print("send car neglect alarm msg to terminal")
+        message = {}
+        message['message'] = "car_seat/neglect"
+        message['sequence'] = 1
+        messageJson = json.dumps(message)
 
         # car_seat/neglect
-    #    message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
+        message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
         #print(message, 1)
 
     #print(neglect_alarm_on, hand_free, baby_is_in_car_seat, (time.time() > neglect_threshold_time),dust_near_baby)
@@ -220,13 +225,18 @@ while True:
         message['message'] = "car_seat/neglect"
         message['sequence'] = 1
         messageJson = json.dumps(message)
-
         # car_seat/neglect
         message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
         #print(message, 1)
+        
     if(dust_near_baby == 1 and baby_is_in_car_seat == 1) :
         move_servo(1)
 
+    if(temp_to_set >0):
+        temp_to_set = 0
+        print("pad must be ready")
+        #control_pad()
+        
     #car_seat_temper()
     if(abs(car_seat_temp - temp_of_baby) > 3) : ##live temp controller
         print("pad must be controlled")
