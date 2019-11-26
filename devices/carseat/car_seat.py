@@ -32,6 +32,7 @@ temp_topic = "anklet/temp"
 handfree_topic = "stroller/handfree"
 neglect_topic = "car_seat/neglect"
 parent_topic = "car/parent"
+auto_
 
 myAWSIoTMQTTClient = None
 myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId)
@@ -97,38 +98,37 @@ def baby_is_in_seat():
         baby_is_in_car_seat = 0
 
 def Callback_for_tempcontrol(client, userdata, message):
-        global temp_of_baby
+    global temp_of_baby
 	temp = json.loads(message.payload)
-        temp_of_baby = temp["sequence"]
-        print("temp_of_baby", temp_of_baby , "is received\n")
+    temp_of_baby = temp["sequence"]
+    print("temp_of_baby", temp_of_baby , "is received\n")
 
 def Callback_for_handfree(client, userdata, message):
-        global hand_free
-        global neglect_alarm_on
-        global neglect_threshold_time
-
-        temp = json.loads(message.payload)
-        hand_free = temp["sequence"]
-        print("hand_free", hand_free , "is received\n")
-
-        if(hand_free == 1):# rfid is not scanned state. setting neglect_threshold_time. should set time based on temp.
-            neglect_alarm_on = 1
-            neglect_threshold_time = time.time() + (neglect_judge_interval)
+    global hand_free
+    global neglect_alarm_on
+    global neglect_threshold_time
+    temp = json.loads(message.payload)
+    hand_free = temp["sequence"]
+    print("hand_free", hand_free , "is received\n")
+    if(hand_free == 1):# rfid is not scanned state. setting neglect_threshold_time. should set time based on temp.
+        neglect_alarm_on = 1
+        neglect_threshold_time = time.time() + (neglect_judge_interval)
 
 def Callback_for_parent(client, userdata, message):
-        global parent_is_in_car
-        global neglect_alarm_on
-        global neglect_threshold_time
-        temp = json.loads(message.payload)
-        parent_is_in_car = temp["sequence"]
-        print("parent_is_in_car", parent_is_in_car , "is received\n")
-        if(parent_is_in_car == 0): # should set time based on temp.
+    global parent_is_in_car
+    global neglect_alarm_on
+    global neglect_threshold_time
+    temp = json.loads(message.payload)
+    parent_is_in_car = temp["sequence"]
+    print("parent_is_in_car", parent_is_in_car , "is received\n")
+    if(parent_is_in_car == 0): # should set time based on temp.
+        neglect_alarm_on = 1
+        neglect_threshold_time = time.time() + (neglect_judge_interval)
 
-            neglect_alarm_on = 1
-            neglect_threshold_time = time.time() + (neglect_judge_interval)
 def stroller_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
+    dust_sensor()
     if(neglect_alarm_on == 1 and hand_free == 1 or time.time() > neglect_threshold_time and baby_is_in_car_seat == 1 or dust_near_baby == 1):# baby_is_in_car_seat = 1
         neglect_alarm_on = 0
         return 1
@@ -137,6 +137,7 @@ def stroller_neglect_alarm_condition():
 def car_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
+    dust_sensor()
     if(neglect_alarm_on == 1 and parent_is_in_car == 0 or time.time() > neglect_threshold_time and baby_is_in_car_seat == 1 or dust_near_baby == 1):# baby_is_in_car_seat = 1
         neglect_alarm_on = 0
         return 1
@@ -188,7 +189,8 @@ while True:
         # car_seat/neglect
         message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
         #print(message, 1)
-    if(abs(car_seat_temp - temp_of_baby) > 3) :
+    car_seat_temper()
+    if(abs(car_seat_temp - temp_of_baby) > 3) : ##live temp controller
         print("pad must be controlled")
         ##control_pad()
         
