@@ -1,6 +1,7 @@
 import time
 import json
 import sys
+import spidev
 
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
@@ -25,12 +26,34 @@ myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 myAWSIoTMQTTClient.connect()
 
 
+
 parent_is_in_car = 1
 fsr_sensor = 0
 
-def send_parent_is_in_car(temp):
+fsr_sensor_adc_channel = 1
+
+spi = spidev.SpiDev()
+spi.open(0,0)
+spi.max_speed_hz = 1000000
+
+
+def analog_read(channel):
+    r = spi.xfer2([1,(8+channel) <<4,0])
+    adc_out = ((r[1]&3<<8)+r[2])
+    return adc_out
+
+def parent_is_in_car():
+    temp = analog_read(fsr_sensor_adc_channel)
+    print(temp)
+    if (temp > 25) :
+        return 1
+    else :
+        return 0
+
+
+def send_parent_is_in_car():
     global parent_is_in_car
-    if (temp == 1): # fsr_sensor
+    if (parent_is_in_car() == 1): # currently parent is in car
         if(parent_is_in_car == 0):
             #send parent is came.
             parent_is_in_car = 1
@@ -42,7 +65,7 @@ def send_parent_is_in_car(temp):
             message = myAWSIoTMQTTClient.publish(parent_topic,messageJson,1)
             print("parent is in car")
     
-    elif (temp == 0): # fsr_sensor
+    elif (parent_is_in_car() == 0): # currently parent is not in car
         if(parent_is_in_car == 1): 
             #send parent is gone.
             parent_is_in_car = 0
@@ -59,8 +82,7 @@ def send_parent_is_in_car(temp):
 
 while True:
     
-    temp = input()
-    send_parent_is_in_car(temp)
+    send_parent_is_in_car()
     time.sleep(3)
 
 
