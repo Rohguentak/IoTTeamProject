@@ -179,9 +179,13 @@ rootCAPath = "./anklet_pi/RootCA.crt"
 certificatePath = "./anklet_pi/bc1b2abd97-certificate.pem.crt"
 privateKeyPath = "./anklet_pi/bc1b2abd97-private.pem.key"
 clientId = "anklet_pi"
+
+# pub topics
 topic_temp = "anklet/temp"
 topic_pulse = "anklet/pulse"
 
+# sub topics
+temp_request_topic = "terminal/temp_request"
 
 
 myAWSIoTMQTTClient = None
@@ -204,6 +208,17 @@ def Callback_func(payload, responseStatus, token):
     print("responseStatus = " + responseStatus)
     print("token = " + token)
 
+def Callback_temp_request(client, userdata, message):
+    message_temp = {}
+    message_temp['message'] = topic_temp
+    message_temp['sequence'] = 35
+    messageJson_temp = json.dumps(message_temp)
+
+    message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
+    print("TEMP is sended to terminal for temp_set_on")
+    print(message, TEMP)
+    
+
 
 loopCount=0
 
@@ -211,6 +226,10 @@ t1 = Thread(target = pulse)
 t1.start()
 t2 = Thread(target = temp)
 t2.start()
+
+myAWSIoTMQTTClient.subscribe(temp_request_topic,1,Callback_temp_request)
+
+
 
 try:
     while True:
@@ -226,10 +245,10 @@ try:
         messageJson_pulse = json.dumps(message_pulse)
         
         
-        message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
-        print(message, BPM)
-        message = myAWSIoTMQTTClient.publish(topic_pulse,messageJson_pulse,1)
-        print(message, TEMP)
+        #message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
+        #print(message, BPM)
+        #message = myAWSIoTMQTTClient.publish(topic_pulse,messageJson_pulse,1)
+        #print(message, TEMP)
     
         for k in range(3):
             print(str(TEMP) + "*****" + str(BPM))
