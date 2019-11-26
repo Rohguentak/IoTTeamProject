@@ -11,7 +11,7 @@ spi.max_speed_hz = 1350000
 
 BPM = 0
 TEMP = 0
-
+exit = 1
 def analog_read(channel):
     r = spi.xfer2([1,(8+channel) << 4,0])
     adc_out = ((r[1]&3)<<8) + r[2]
@@ -21,6 +21,7 @@ def analog_read(channel):
 
 def pulse():
     global BPM
+    global exit
     rate = [0] * 10         # array to hold last 10 IBI values
     sampleCounter = 0       # used to determine pulse timing
     lastBeatTime = 0        # used to find IBI
@@ -36,7 +37,7 @@ def pulse():
     Pulse = False           # "True" when User's live heartbeat is detected. "False" when not a "live beat
     lastTime = int(time.time()*1000)
     try:
-      while True:
+      while exit == 1:
         for k in range(1,20):
             Signal = analog_read(0)
             currentTime = int(time.time()*1000)
@@ -109,19 +110,22 @@ def pulse():
             else :              print('-')
             '''
     except KeyboardInterrupt:
-        print("terminated by keyboard")
+        print("terminated by keyboard------pulse")
             
 # pulse part
 
+
+
+
 import Adafruit_DHT
-import time
 
 def temp():
     sensor = Adafruit_DHT.DHT11
     pin = 24
     global TEMP
+    global exit
     try:
-        while True :
+        while exit==1 :
             h, t = Adafruit_DHT.read_retry(sensor, pin)
             
             if h is not None and t is not None :
@@ -132,7 +136,7 @@ def temp():
                 print('Read error')
             time.sleep(5)
     except KeyboardInterrupt:
-        print("terminated by keyboard")
+        print("terminated by keyboard-------temp")
 
 #temp part
 
@@ -207,6 +211,7 @@ t1 = Thread(target = pulse)
 t1.start()
 t2 = Thread(target = temp)
 t2.start()
+
 try:
     while True:
     
@@ -232,8 +237,14 @@ try:
         
         loopCount +=1
 except KeyboardInterrupt:
-    t1.stop()
-    t2.stop()
+    print("keyboard interrupt")
+    exit = 0
+    t1.join()
+    print("t1 joined")
+    
+    t2.join()
+    print("t2 joined")
+    
     print("terminated by keyboard")
 
 
