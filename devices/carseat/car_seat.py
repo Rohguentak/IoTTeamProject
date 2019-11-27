@@ -146,7 +146,7 @@ def Callback_for_temp_set_on(client, userdata, message):
     temp = json.loads(message.payload)
     # terminal/temp_set_on data is baby's temperature.
     temp_to_set = temp["sequence"]
-    print("temperature", temp_to_set , "is received\n")
+    print("pad must be ready to", temp_to_set)
     
 def stroller_neglect_alarm_condition():
     global neglect_alarm_on
@@ -168,7 +168,7 @@ def car_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
     dust_sensor()
-    if(neglect_alarm_on == 1 and parent_is_in_car == 0 or time.time() > neglect_threshold_time and baby_is_in_car_seat == 1 or dust_near_baby == 1):# baby_is_in_car_seat = 1
+    if(neglect_alarm_on == 1 and parent_is_in_car == 0  and baby_is_in_car_seat == 1 and (time.time() > neglect_threshold_time or dust_near_baby == 1)):# baby_is_in_car_seat = 1
         neglect_alarm_on = 0
         return 1
     return 0
@@ -238,8 +238,8 @@ while True:
         #control_pad()
         
     #car_seat_temper()
-    if(abs(car_seat_temp - temp_of_baby) > 3) : ##live temp controller
-        print("pad must be controlled")
+    #if(abs(car_seat_temp - temp_of_baby) > 3) : ##live temp controller
+    #    print("pad must be controlled")
         ##control_pad()
         
     time.sleep(3)
