@@ -78,7 +78,7 @@ def send_temp_set_request():
             		message_temp_set_on['sequence'] = TEMP
             		messageJson_temp_set_on = json.dumps(message_temp_set_on)
         
-            		message = myAWSIoTMQTTClient.publish(temp_set_on,messageJson_temp_set_on,1)
+            		message = myAWSIoTMQTTClient.publish(temp_set_on_topic,messageJson_temp_set_on,1)
             		print("sent to carseat temp : ")
             		print(message.palyoad)
             		TEMP = -200
