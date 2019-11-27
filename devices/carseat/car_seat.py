@@ -146,7 +146,7 @@ def Callback_for_temp_set_on(client, userdata, message):
     temp = json.loads(message.payload)
     # terminal/temp_set_on data is baby's temperature.
     temp_to_set = temp["sequence"]
-    print("temperature", temperature , "is received\n")
+    print("temperature", temp_to_set , "is received\n")
     
 def stroller_neglect_alarm_condition():
     global neglect_alarm_on
