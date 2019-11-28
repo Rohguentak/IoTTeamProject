@@ -18,8 +18,10 @@ clientId = "car_seat_pi"
 sensor = Adafruit_DHT.DHT11
 pin = 24 ## temp_sensor
 dust_gpio = 2
+pad_gpio = 17
 gpio.setmode(gpio.BCM)
 gpio.setup(dust_gpio, gpio.OUT)
+gpio.setup(pad_gpio,gpio.OUT)
 
 pin_servo = 18 ## servo_motor
 gpio.setup(pin_servo, gpio.OUT)
@@ -181,7 +183,14 @@ def move_servo(data):
         servo.ChangeDutyCycle(12.5)
         time.sleep(0.5)
     
-##def control_pad():
+def control_pad(data):
+    if(data == 1) :
+        print("pad on")
+        gpio.outout(pad_gpio,True)
+    else :
+        print("pad off")
+        gpio.output(pad_gpio,False)
+    
         
 	
 # anklet/temp	
@@ -237,11 +246,11 @@ while True:
         print("pad must be ready")
         #control_pad()
         
-    #car_seat_temper()
-    #if(abs(car_seat_temp - temp_of_baby) > 3) : ##live temp controller
-    #    print("pad must be controlled")
-        ##control_pad()
-        
+    car_seat_temper()
+    if(abs(car_seat_temp - temp_of_baby) > 3) : ##live temp controller
+        control_pad(1)
+    else :
+        control_pad(0)
     time.sleep(3)
     loopCount +=1
 
