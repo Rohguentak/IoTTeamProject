@@ -2,6 +2,7 @@
 
 mcp3008 핀 배치 https://m.blog.naver.com/PostView.nhn?blogId=roboholic84&logNo=220367321777&proxyReferer=https%3A%2F%2Fwww.google.com%2F
 
+gps library https://github.com/FranzTscharf/Python-NEO-6M-GPS-Raspberry-Pi
 
 미세먼지 센서 회로도 https://cafe.naver.com/mechawiki/33
 
