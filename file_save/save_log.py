@@ -7,7 +7,7 @@ def gen_one_set_save(lat, lon ):
     H_m_s = time.strftime('%x',time.localtime(time.time()))
     H_m_s = H_m_s.replace('/',':')
 
-    time_slot = Y_m_d + "T" + H_m_s
+    time_slot = Y_m_d + "T" + H_m_s + ".000Z"
 
     file = "./" + Y_m_d + ".log"
 
