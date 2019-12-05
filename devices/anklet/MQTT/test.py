@@ -27,15 +27,8 @@ def pulse():
     global BPM
     global exit
     
-    p = Pulsesensor()
-    p.startAsyncBPM()
-
     while exit == 1:
-        BPM = p.BPM
-        if BPM > 0:
-            print("BPM: %d" % BPM)
-        else:
-            print("No Heartbeat found")
+        print("pulse")
         time.sleep(1)
 # pulse part
 
@@ -45,19 +38,11 @@ def pulse():
 import Adafruit_DHT
 
 def temp():
-    sensor = Adafruit_DHT.DHT11
-    pin = 24
     global TEMP
     global exit
     while exit ==1 :
-        h, t = Adafruit_DHT.read_retry(sensor, pin)
-            
-        if h is not None and t is not None :
-            print("Temperature = {0:0.1f}%".format(t))
-            TEMP = t
         
-        else :
-            print('Read error')
+        print('temp')
         time.sleep(5)
 
 
@@ -134,7 +119,7 @@ def Callback_func(payload, responseStatus, token):
 def Callback_temp_request(client, userdata, message):
     message_temp = {}
     message_temp['message'] = topic_temp
-    message_temp['sequence'] = TEMP
+    message_temp['sequence'] = 35
     messageJson_temp = json.dumps(message_temp)
 
     message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
