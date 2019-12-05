@@ -1,6 +1,6 @@
 import time
 import RPi.GPIO as gpio
-vibe_pin = 12
+vibe_pin = 2
 gpio.setmode(gpio.BCM)
 gpio.setup(vibe_pin, gpio.IN) # gpio for vibe
 
@@ -15,5 +15,6 @@ def vibe_sensor():
 		
 while True :
 	vibe_sensor()
-	time.sleep(0.05)
+        time.sleep(0.5)
+    
 
