@@ -31,11 +31,13 @@ temp_pin = 24 ## temp_sensor
 dust_gpio = 2
 pad_gpio = 17
 pin_servo = 18 ## servo_motor
+vibe_pin = 3
 
 gpio.setmode(gpio.BCM)
 gpio.setup(dust_gpio, gpio.OUT)
 gpio.setup(pad_gpio,gpio.OUT)
 gpio.setup(pin_servo, gpio.OUT)
+gpio.setup(vibe_pin, gpio.IN)
 
 servo = gpio.PWM(pin_servo,50)
 servo.start(0)
@@ -69,6 +71,7 @@ dust_near_baby = 0
 temp_to_set = 0
 exit = 1
 dust = 0
+send_gps = 0
 def analog_read(channel):
     r = spi.xfer2([1,(8+channel) <<4,0])
     adc_out = ((r[1]&3<<8)+r[2])
@@ -125,7 +128,17 @@ def control_pad(data):
     else :
         print("pad off")
         gpio.output(pad_gpio,False)
-
+        
+def vibe_sensor():
+    global send_gps
+    global exit
+    while exit == 1:
+        a = gpio.input(vibe_pin)
+        if a == 0 :
+            print("vibe is sensing")
+            send_gps = 1
+        time.sleep(1)   
+         
 def stroller_neglect_alarm_condition():
     global neglect_alarm_on
     baby_is_in_seat()
@@ -172,6 +185,8 @@ loopCount = 0
 move_servo(0) ##set canopy to initial setting
 t1 = Thread(target = car_seat_temper) ## car_seat_temp thread
 t1.start()
+t2 = Thread(target = vibe_sensor)
+t2.start()
 try :
     while True:
         if( stroller_neglect_alarm_condition() == 1): #check neglect and if neglect send msg to terminal
@@ -200,7 +215,9 @@ except KeyboardInterrupt:
     print("keyboard interrupt")
     exit = 0
     t1.join()
+    t2.join()
     print("t1 joined")
+    print("t2 joined")
     print("terminated by keyboard")
 
 
