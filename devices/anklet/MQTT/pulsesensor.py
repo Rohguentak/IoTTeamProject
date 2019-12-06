@@ -84,7 +84,7 @@ class Pulsesensor:
                 secondBeat = False                      # when we get the heartbeat back
                 self.BPM = 0
 
-            time.sleep(0.005)
+            time.sleep(0.001)
             
         
     # Start getBPMLoop routine which saves the BPM in its variable
