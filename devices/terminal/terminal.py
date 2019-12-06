@@ -14,7 +14,8 @@ clientId = "terminal_pc"
 # sub topics
 car_seat_neglect_topic = "car_seat/neglect"
 topic_pulse = "anklet/pulse"
-anklet_temp_topic = "anklet/temp"
+common_anklet_temp_topic = "anklet/temp"
+anklet_temp_topic = "anklet/temp_for_terminal"
 
 # pub topics
 temp_request_topic = "terminal/temp_request" # for request baby's temperature to anklet
@@ -78,18 +79,23 @@ def send_temp_set_request():
         
             		message = myAWSIoTMQTTClient.publish(temp_set_on_topic,messageJson_temp_set_on,1)
             		print("sent to carseat temp : ")
-            		print(message.palyoad)
+            		#print(message.palyoad)
             		TEMP = -200
 			break
             
 
 
 myAWSIoTMQTTClient.subscribe(car_seat_neglect_topic, 1, customCallback)
-myAWSIoTMQTTClient.subscribe(topic_pulse, 1, customCallback_dummy)
+#myAWSIoTMQTTClient.subscribe(topic_pulse, 1, customCallback_dummy)
 myAWSIoTMQTTClient.subscribe(anklet_temp_topic, 1, Callback_anklet_temp)
+#myAWSIoTMQTTClient.subscribe(common_anklet_temp_topic, 1, Callback_anklet_temp)
 
-# do temp set request
-send_temp_set_request()
+
+
 
 while True:
-        	time.sleep(1)
+    request_temp_set_on = input()
+    if(request_temp_set_on == 1):
+        print("temp_set_request msg is sent\n")
+        send_temp_set_request()
+    time.sleep(1)
