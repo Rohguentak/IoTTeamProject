@@ -51,21 +51,22 @@ spi.open(0,0)
 spi.max_speed_hz = 1000000
 
 # subscribe topics
+gps_topic = "gps/log_data"
 temp_topic = "anklet/temp"
 handfree_topic = "stroller/handfree"
 temp_set_on_topic = "terminal/temp_set_on"
 
 # pub topics 
 neglect_topic = "car_seat/neglect"
-
+request_topic = "realtime/temp_request"
 # if rfid tag is not scanned state, state 0. else rfid tag is scanned state. state 1
 # unit: second
-hand_free = 1 #0
+hand_free = 0 #0
 neglect_judge_interval = 3
 neglect_threshold_time = time.time()
 car_seat_temp = 0
 baby_is_in_car_seat = 0
-neglect_alarm_on = 1 #0
+neglect_alarm_on = 0 #0
 temp_of_baby = 0
 dust_near_baby = 0
 temp_to_set = 0
@@ -136,7 +137,13 @@ def vibe_sensor():
         a = gpio.input(vibe_pin)
         if a == 0 :
             print("vibe is sensing")
-            send_gps = 1
+            print("send gps data")
+            message = {}
+            message['message'] = "gps data"
+            message['lat'] = "37.554648"
+            message['lon'] = "126.972559"
+            messageJson = json.dumps(message)
+            message = myAWSIoTMQTTClient.publish(gps_topic,messageJson,1)
         time.sleep(1)   
          
 def stroller_neglect_alarm_condition():
@@ -187,6 +194,7 @@ t1 = Thread(target = car_seat_temper) ## car_seat_temp thread
 t1.start()
 t2 = Thread(target = vibe_sensor)
 t2.start()
+send = 1
 try :
     while True:
         if( stroller_neglect_alarm_condition() == 1): #check neglect and if neglect send msg to terminal
@@ -198,14 +206,33 @@ try :
             messageJson = json.dumps(message)
             message = myAWSIoTMQTTClient.publish(neglect_topic,messageJson,1)
         
+        if (baby_is_in_car_seat == 1 and send == 1) :
+            send = 0
+            print("send request to realtime temp control")
+            message = {}
+            message['sequence'] = 1
+            messageJson = json.dumps(message)
+            message = myAWSIoTMQTTClient.publish(request_topic,messageJson,1)
+        if (baby_is_in_car_seat == 0 and send == 0) : 
+            send = 1
+            print("send stop to realtime temp control")
+            message = {}
+            message['sequence'] = 0
+            messageJson = json.dumps(message)
+            message = myAWSIoTMQTTClient.publish(request_topic,messageJson,1)
+            
         if(dust_near_baby == 1 and baby_is_in_car_seat == 1) :
             move_servo(1)
-
-        if(temp_to_set > 0 or 20 > abs(car_seat_temp - temp_of_baby) > 3):
+        
+        print("carseat temperature is "+str(car_seat_temp))
+        
+        if(temp_to_set > 0 or 20 > abs(car_seat_temp - temp_of_baby) > 3 and temp_of_baby != 0):
             print("pad must be ready")
             control_pad(1)
-        elif(abs(temp_to_set-car_seat_temp) < 3 or abs(car_seat_temp - temp_of_baby) < 3) :
+        
+        if(abs(temp_to_set-car_seat_temp) < 3 or abs(car_seat_temp - temp_of_baby) < 3) :
             temp_to_set = 0
+            print("pad is hot enough")
             control_pad(0)
         
         time.sleep(3)
