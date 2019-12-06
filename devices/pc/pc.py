@@ -3,8 +3,10 @@ import json
 import sys
 import spidev
 import os
-
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
+
+import random
+import signal
 
 host = "azjctapxbp7sc-ats.iot.ap-northeast-2.amazonaws.com"
 
@@ -32,31 +34,48 @@ myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
 myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 myAWSIoTMQTTClient.connect()
 
+from collections import OrderedDict
+
+stop = 0
+
+def signal_handler(sig,frame):
+	global stop
+   	stop = 1
+
+signal.signal(signal.SIGINT, signal_handler)
+
+def load(filepath):
+	with open(filepath) as json_file:
+    		temp = json.load(json_file)
+		return temp
+
 def save_log_at_file(lat, lon ):
     Y_m_d = time.strftime('%Y-%m-%d',time.localtime(time.time()))
 
-    H_m_s = time.strftime('%x',time.localtime(time.time()))
+    H_m_s = time.strftime('%X',time.localtime(time.time()))
     H_m_s = H_m_s.replace('/',':')
 
     time_slot = Y_m_d + "T" + H_m_s + ".000Z"
+    print(time.time())
+    print(time_slot)
+    file = "./log_data/" + Y_m_d + "T" + H_m_s + ".log"
 
-    file = "./log_data/" + Y_m_d + ".log"
-
+    data = OrderedDict()
     if os.path.exists(file):
         fp = open(file,'a')
-        data = "{\"time_slot\":"+ "\"" + time_slot + "\""
-        data = data + "," + "\"event_geo\":"+ "{\"lat\":" + lat
-        data = data + "," + "\"lon\":"+ lon + "}}"
-        fp.write(data)
-        fp.close()
+	data["time_slot"] = str(time_slot)
+	data["event_geo"] = {'lat':lat,'lon':lon}
+        fp.write(json.dumps(data))
+	fp.write("\n")
+	return fp
     else :
         fp = open(file,'w')
-        data = "{\"time_slot\":"+ "\"" + time_slot + "\""
-        data = data + "," + "\"event_geo\":"+ "{\"lat\":" + lat
-        data = data + "," + "\"lon\":"+ lon + "}}"
-        fp.write(data)
-        fp.close()
- 
+	data["time_slot"] = str(time_slot)
+        data["event_geo"] = {'lat':lat,'lon':lon}
+        fp.write(json.dumps(data))
+	fp.write("\n")
+     	return fp
+
 
 
 def Callback_for_gps_data(client, userdata, message):
@@ -64,7 +83,7 @@ def Callback_for_gps_data(client, userdata, message):
     temp = json.loads(message.payload)# terminal/temp_set_on data is baby's temperature.
     lat = temp["lat"]
     lon = temp["lon"]
-    save_log_at_file(lat,lon)
+    save_log_at_file(str(lat),str(lon))
     print(lat)
     print(lon)
 
@@ -74,10 +93,15 @@ myAWSIoTMQTTClient.subscribe(gps_data_topic, 1, Callback_for_gps_data)
 #
 
 
+while (stop == 0):
+    	lat_random = round(random.random(),6) + 37
+    	lon_random = round(random.random(),6) + 121
+    	fp = save_log_at_file(lat_random, lon_random)
+	fp.close()
+    	print(lat_random, lon_random)
+    	time.sleep(3)
+	
 
-
-while True:
-    time.sleep(3)
 
 
 
