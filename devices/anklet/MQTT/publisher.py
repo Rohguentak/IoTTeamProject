@@ -1,14 +1,17 @@
-import time
-import json
+
 
 from pulsesensor import Pulsesensor
-import time
 
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import spidev
 from threading import Thread
 import RPi.GPIO as gpio
 import random
+import sys
+import time
+import json
+import signal
+
 
 spi = spidev.SpiDev()
 spi.open(0,0)
@@ -16,7 +19,7 @@ spi.max_speed_hz = 1350000
 
 BPM = 0
 TEMP = 0
-exit = 1
+exit = True
 request = 0
 realtime = 0
 
@@ -26,6 +29,21 @@ def analog_read(channel):
     return adc_out
 
 
+def end_read(signal,frame):
+    global exit
+    print("keyboard interrupt")
+    
+    exit = False
+    t1.join()
+    print("t1 joined")
+    
+    t2.join()
+    print("t2 joined")
+    
+    print("terminated by keyboard")
+    
+signal.signal(signal.SIGINT, end_read)
+
 
 def pulse():
     global BPM
@@ -34,7 +52,7 @@ def pulse():
     p = Pulsesensor()
     p.startAsyncBPM()
 
-    while exit == 1:
+    while exit:
         BPM = p.BPM
         if BPM > 0:
             print("BPM: %d" % BPM)
@@ -57,7 +75,7 @@ def temp():
     pin = 24
     global TEMP
     global exit
-    while exit ==1 :
+    while exit:
         h, t = Adafruit_DHT.read_retry(sensor, pin)
             
         if h is not None and t is not None :
@@ -161,8 +179,7 @@ def Callback_realtime_request(client, userdata, message):
     realtime = temp["sequence"]
     print(realtime)
 
-
-loopCount=0
+offset = 0
 
 t1 = Thread(target = pulse)
 t1.start()
@@ -173,48 +190,33 @@ myAWSIoTMQTTClient.subscribe(temp_request_topic,1,Callback_temp_request)
 myAWSIoTMQTTClient.subscribe(realtime_request_topic,1,Callback_realtime_request)
 
 
-try:
-    while True:
-        message_temp = {}
-        message_temp['message'] = topic_temp
-        message_temp['sequence'] = TEMP
-        messageJson_temp = json.dumps(message_temp)
+while exit:
+    message_temp = {}
+    message_temp['message'] = topic_temp
+    message_temp['sequence'] = TEMP
+    messageJson_temp = json.dumps(message_temp)
 
-        message_pulse = {}
-        message_pulse['message'] = topic_pulse
-        message_pulse['sequence'] = int(BPM/3)
-        messageJson_pulse = json.dumps(message_pulse)
-        
-        
-        
-        
-        if realtime == 1:
-            message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
-            print(message, BPM)
-            message = myAWSIoTMQTTClient.publish(topic_pulse,messageJson_pulse,1)
-            print(message, TEMP)
+    message_pulse = {}
+    message_pulse['message'] = topic_pulse
+    message_pulse['sequence'] = int(BPM/3)
+    messageJson_pulse = json.dumps(message_pulse)
+     
+     
+    if realtime == 1:
+        message = myAWSIoTMQTTClient.publish(topic_temp,messageJson_temp,1)
+        print(message, BPM/3)
+        message = myAWSIoTMQTTClient.publish(topic_pulse,messageJson_pulse,1)
+        print(message, TEMP+offset)
             
-        if request == 1:
-            message = myAWSIoTMQTTClient.publish(topic_temp_for_terminal,messageJson_temp,1)
-            request = 0
-            print("TEMP is sended to terminal for temp_set_on")
-            print(message, TEMP)
-
-        for k in range(3):
-            print(str(TEMP) + "*****" + str(int(BPM/3)))
-            time.sleep(1)
-        
-        loopCount +=1
-except KeyboardInterrupt:
-    print("keyboard interrupt")
-    exit = 0
-    t1.join()
-    print("t1 joined")
-    
-    t2.join()
-    print("t2 joined")
-    
-    print("terminated by keyboard")
-
+    if request == 1:
+        message = myAWSIoTMQTTClient.publish(topic_temp_for_terminal,messageJson_temp,1)
+        request = 0
+        print("TEMP is sended to terminal for temp_set_on")
+        print(message, TEMP+offset)
+     
+    for k in range(3):
+        print(str(TEMP+offset) + "*****" + str(int(BPM/3)))
+        time.sleep(1)
+        offset = (offset+0.1)%0.2
 
 
