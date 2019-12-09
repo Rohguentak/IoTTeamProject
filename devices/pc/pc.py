@@ -83,7 +83,8 @@ def Callback_for_gps_data(client, userdata, message):
     temp = json.loads(message.payload)# terminal/temp_set_on data is baby's temperature.
     lat = temp["lat"]
     lon = temp["lon"]
-    save_log_at_file(str(lat),str(lon))
+    fp = save_log_at_file(str(lat),str(lon))
+    fp.close()
     print(lat)
     print(lon)
 
@@ -92,13 +93,16 @@ def Callback_for_gps_data(client, userdata, message):
 myAWSIoTMQTTClient.subscribe(gps_data_topic, 1, Callback_for_gps_data)
 #
 
+i=0
 
 while (stop == 0):
-    	lat_random = round(random.random(),6) + 37
-    	lon_random = round(random.random(),6) + 121
-    	fp = save_log_at_file(lat_random, lon_random)
-	fp.close()
-    	print(lat_random, lon_random)
+    	#lat_random = round(random.random(),6) + 37
+    	#lon_random = round(random.random(),6) + 121
+    	#fp = save_log_at_file(lat_random, lon_random)
+	#fp.close()
+    	#print(lat_random, lon_random)
+	print(str(i)+"\n")
+	i = i+1
     	time.sleep(3)
 	
 
